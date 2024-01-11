@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { FilterTaskDto } from './dto/filter-task.dto';
@@ -30,6 +30,9 @@ export class TasksService {
         return false;
       });
     }
+    if (!tasks) {
+      throw new NotFoundException(`Task not found`);
+    }
     return tasks;
   }
 
@@ -46,10 +49,16 @@ export class TasksService {
   }
 
   getTaskById(taskId: string): Tasks {
-    return this.tasks.find((tasks) => tasks.id === taskId);
+    const task = this.tasks.find((tasks) => tasks.id === taskId);
+    if (task) {
+      return task;
+    }
+    throw new NotFoundException(`Task with id ${taskId} not found.`);
   }
 
   deleteTaskById(taskId: string): void {
+    this.getTaskById(taskId);
+
     this.tasks = this.tasks.filter((tasks) => tasks.id !== taskId);
   }
 
@@ -59,6 +68,6 @@ export class TasksService {
       task.status = status;
       return task;
     }
-    throw Error(`Task ID ${id} doesn't exits`);
+    throw new NotFoundException(`Task ID ${id} doesn't exits`);
   }
 }
