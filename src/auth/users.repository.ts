@@ -4,10 +4,12 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bycrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { AuthCredentailsDto } from './dto/auth-credentials.dto';
+import { JWTPayload } from './jwt-payload.interface';
 import { Users } from './users.entity';
 
 @Injectable()
@@ -15,6 +17,7 @@ export class UsersRepository {
   constructor(
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
+    private jwtService: JwtService,
   ) {}
 
   async createUser(authCredentailsDto: AuthCredentailsDto): Promise<void> {
@@ -36,14 +39,28 @@ export class UsersRepository {
     }
   }
 
-  async signInUser(authCredentailsDto: AuthCredentailsDto): Promise<string> {
+  async signInUser(
+    authCredentailsDto: AuthCredentailsDto,
+  ): Promise<{ accessToken: string }> {
     const { username, password } = authCredentailsDto;
     const user = await this.usersRepository.findOneBy({ username });
     if (user && (await bycrypt.compare(password, user.password))) {
-      return 'success';
+      const payload: JWTPayload = { username };
+      const accessToken = this.jwtService.sign(payload);
+      return { accessToken };
     }
     throw new UnauthorizedException(
       'Please provide correct username or password!',
     );
+  }
+
+  async validateUser(payload: JWTPayload): Promise<Users> {
+    const { username } = payload;
+    const user: Users = await this.usersRepository.findOneBy({ username });
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return user;
   }
 }

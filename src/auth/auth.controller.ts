@@ -12,7 +12,15 @@ export class AuthController {
   }
 
   @Post('/signin')
-  signIn(@Body() authCredentailsDto: AuthCredentailsDto): Promise<string> {
+  signIn(
+    @Body() authCredentailsDto: AuthCredentailsDto,
+  ): Promise<{ accessToken: string }> {
     return this.authService.signIn(authCredentailsDto);
   }
+
+  // @Get('/test')
+  // @UseGuards(AuthGuard())
+  // test(@Request() req) {
+  //   console.log({ req });
+  // }
 }
