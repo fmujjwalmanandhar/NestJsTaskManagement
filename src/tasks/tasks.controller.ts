@@ -10,9 +10,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/auth/get-user.decorator';
-import { Users } from 'src/auth/users.entity';
+import { GetUser } from '../auth/get-user.decorator';
+import { Users } from '../auth/users.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { FilterTaskDto } from './dto/filter-task.dto';
 import { UpadateTaskStatusDto } from './dto/update-task-status.dto';
@@ -23,7 +24,12 @@ import { TasksService } from './tasks.service';
 @UseGuards(AuthGuard())
 export class TasksController {
   private logger = new Logger('TaskController');
-  constructor(private tasksService: TasksService) {}
+  constructor(
+    private tasksService: TasksService,
+    private configService: ConfigService,
+  ) {
+    console.log({ configService: configService.get('SOME_DEV') });
+  }
 
   @Get()
   getTasks(

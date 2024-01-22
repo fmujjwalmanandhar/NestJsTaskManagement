@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentailsDto } from './dto/auth-credentials.dto';
 
@@ -16,6 +16,11 @@ export class AuthController {
     @Body() authCredentailsDto: AuthCredentailsDto,
   ): Promise<{ accessToken: string }> {
     return this.authService.signIn(authCredentailsDto);
+  }
+
+  @Get('/checkappversion')
+  checkAppVersion(): Promise<string> {
+    return this.authService.checkAppVersion();
   }
 
   // @Get('/test')

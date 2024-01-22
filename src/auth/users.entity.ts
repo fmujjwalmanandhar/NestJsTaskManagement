@@ -1,5 +1,6 @@
-import { Task } from 'src/tasks/task.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Task } from '../tasks/task.entity';
 
 @Entity()
 export class Users {
@@ -11,6 +12,9 @@ export class Users {
 
   @Column()
   password: string;
+
+  @Column({ default: '5.1.0' })
+  appversioninfo: string;
 
   /***Relation between Users and Task */
   @OneToMany((_type) => Task, (task) => task.user, { eager: true })

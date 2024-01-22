@@ -15,4 +15,8 @@ export class AuthService {
   ): Promise<{ accessToken: string }> {
     return this.userRepository.signInUser(authCredentailsDto);
   }
+
+  checkAppVersion(): Promise<string> {
+    return this.userRepository.checkAppVersion();
+  }
 }

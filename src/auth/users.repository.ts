@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +15,8 @@ import { Users } from './users.entity';
 
 @Injectable()
 export class UsersRepository {
+  private logger = new Logger('UsersRepository');
+
   constructor(
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
@@ -32,6 +35,7 @@ export class UsersRepository {
     try {
       await this.usersRepository.save(user);
     } catch (error) {
+      this.logger.error('Error occured', error.stack);
       if (error.code === '23505') {
         throw new ConflictException(`Username ${username} already exists.`);
       }
@@ -39,19 +43,39 @@ export class UsersRepository {
     }
   }
 
+  async checkAppVersion(): Promise<string> {
+    try {
+      const version = await this.usersRepository
+        .createQueryBuilder('users')
+        .select('users.appversioninfo', 'app_version_info')
+        .distinct(true)
+        .getRawOne();
+      return version;
+    } catch (error) {
+      this.logger.error('Error occured', error.stack);
+
+      throw new InternalServerErrorException();
+    }
+  }
+
   async signInUser(
     authCredentailsDto: AuthCredentailsDto,
   ): Promise<{ accessToken: string }> {
-    const { username, password } = authCredentailsDto;
-    const user = await this.usersRepository.findOneBy({ username });
-    if (user && (await bycrypt.compare(password, user.password))) {
-      const payload: JWTPayload = { username };
-      const accessToken = this.jwtService.sign(payload);
-      return { accessToken };
+    try {
+      const { username, password } = authCredentailsDto;
+      const user = await this.usersRepository.findOneBy({ username });
+      if (user && (await bycrypt.compare(password, user.password))) {
+        const payload: JWTPayload = { username };
+        const accessToken = this.jwtService.sign(payload);
+        return { accessToken };
+      }
+      throw new UnauthorizedException(
+        'Please provide correct username or password!',
+      );
+    } catch (error) {
+      this.logger.error('Error occured', error.stack);
+      throw new InternalServerErrorException();
     }
-    throw new UnauthorizedException(
-      'Please provide correct username or password!',
-    );
   }
 
   async validateUser(payload: JWTPayload): Promise<Users> {
